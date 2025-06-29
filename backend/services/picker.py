@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, Tuple
-from ..models.request import StockPickRequest
-from ..models.response import StockRecommendation
+from models.request import StockPickRequest
+from models.response import StockRecommendation
 from .finnhub_client import FinnhubClient
 
 

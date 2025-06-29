@@ -91,7 +91,7 @@ export default function SimpleChart({ ticker, range }: SimpleChartProps) {
 
       {/* Simple Price Bars */}
       <div className="space-y-2">
-        <div className="text-sm font-medium text-muted-foreground">Today's Range</div>
+        <div className="text-sm font-medium text-muted-foreground">Today&apos;s Range</div>
         <div className="flex items-center gap-4 text-sm">
           <div>
             <span className="text-muted-foreground">Low:</span> ${quote.l?.toFixed(2)}

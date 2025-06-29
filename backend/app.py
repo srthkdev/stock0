@@ -27,6 +27,10 @@ from models.request import StockPickRequest
 from models.response import StockPickResponse
 from graph.stock_picker_graph import StockPickerGraph
 
+# Portfolio imports
+from models.portfolio import AutoPortfolioRequest, ChatRequest, ChatResponse, Portfolio
+from services.portfolio_service import PortfolioService
+
 # =============================================================================
 # 🏷️ NEWS CATEGORIZER
 # =============================================================================
@@ -291,6 +295,7 @@ def create_fastapi_app():
     
     news_assistant = FinancialNewsAssistant()
     stock_picker_graph = StockPickerGraph()
+    portfolio_service = PortfolioService()
     
     @app.get("/")
     async def root():
@@ -300,6 +305,9 @@ def create_fastapi_app():
             "version": "1.0.0",
             "endpoints": {
                 "/api/stock-pick": "POST - Smart stock portfolio recommendations",
+                "/api/portfolio/create": "POST - Create auto portfolio from preferences",
+                "/api/portfolio/chat": "POST - Chat with your portfolio",
+                "/api/portfolio/{user_id}": "GET - Get user's portfolios",
                 "/api/news/day": "Today's top 5 US financial news",
                 "/api/news/week": "This week's top 5 US financial news", 
                 "/api/news/month": "This month's top 5 US financial news",
@@ -315,12 +323,16 @@ def create_fastapi_app():
         tavily_status = "✅ Connected" if os.getenv("TAVILY_API_KEY") else "❌ No API Key"
         finnhub_status = "✅ Connected" if os.getenv("FINNHUB_API_KEY") else "❌ No API Key"
         openai_status = "✅ Connected" if os.getenv("OPENAI_API_KEY") else "❌ No API Key"
+        appwrite_status = "✅ Connected" if os.getenv("APPWRITE_PROJECT_ID") else "❌ No API Key"
+        mem0_status = "✅ Connected" if os.getenv("MEM0_API_KEY") else "❌ No API Key"
         return {
             "status": "healthy",
             "services": {
                 "tavily_api": tavily_status,
                 "finnhub_api": finnhub_status,
-                "openai_api": openai_status
+                "openai_api": openai_status,
+                "appwrite_db": appwrite_status,
+                "mem0_memory": mem0_status
             },
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
@@ -344,6 +356,68 @@ def create_fastapi_app():
                 status_code=500, 
                 detail=f"Stock picking failed: {str(e)}"
             )
+
+    @app.post("/api/portfolio/create", response_model=Portfolio)
+    async def create_auto_portfolio(request: AutoPortfolioRequest):
+        """
+        Create an automatic portfolio based on user preferences.
+        
+        Analyzes user preferences and automatically selects stocks to create
+        a diversified portfolio with proper allocation and risk management.
+        """
+        try:
+            portfolio = await portfolio_service.create_auto_portfolio(request)
+            
+            if portfolio:
+                return portfolio
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to create portfolio"
+                )
+                
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Portfolio creation failed: {str(e)}"
+            )
+
+    @app.post("/api/portfolio/chat", response_model=ChatResponse)
+    async def chat_with_portfolio(request: ChatRequest):
+        """
+        Chat with your portfolio using AI.
+        
+        Ask questions about your portfolio performance, get investment advice,
+        and receive personalized recommendations based on your holdings.
+        """
+        try:
+            response = await portfolio_service.chat_with_portfolio(request)
+            return response
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Chat failed: {str(e)}"
+            )
+
+    @app.get("/api/portfolio/{user_id}")
+    async def get_user_portfolios(user_id: str):
+        """Get all portfolios for a user."""
+        try:
+            portfolios = await portfolio_service.get_user_portfolios(user_id)
+            return {
+                "success": True,
+                "portfolios": portfolios,
+                "count": len(portfolios),
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            }
 
     @app.get("/api/news/day")
     async def get_day_news():

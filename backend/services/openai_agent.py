@@ -2,8 +2,8 @@ import os
 from typing import List, Optional
 from openai import OpenAI
 from dotenv import load_dotenv
-from ..models.request import StockPickRequest
-from ..models.response import StockRecommendation
+from models.request import StockPickRequest
+from models.response import StockRecommendation
 
 load_dotenv()
 
@@ -46,7 +46,7 @@ class OpenAIAgent:
             
             # Get response from OpenAI
             response = self.client.chat.completions.create(
-                model="gpt-4-turbo-preview",
+                model="gpt-4o-mini",
                 messages=[
                     {
                         "role": "system",
@@ -153,7 +153,7 @@ Focus on why this stock fits the investor's specific profile and goals.
 """
             
             response = self.client.chat.completions.create(
-                model="gpt-4-turbo-preview",
+                model="gpt-4o-mini",
                 messages=[
                     {
                         "role": "system",
@@ -199,4 +199,134 @@ Focus on why this stock fits the investor's specific profile and goals.
         reasoning += f"This allocation aims to achieve your {request.goal.target_return}% target return "
         reasoning += f"over {request.goal.duration_years} years through strategic sector diversification."
         
-        return reasoning 
+        return reasoning
+    
+    async def chat_with_portfolio(self, message: str, portfolio_context: dict, user_id: str) -> str:
+        """Chat with portfolio using AI analysis."""
+        
+        if not self.client:
+            return self._generate_basic_chat_response(message, portfolio_context)
+        
+        try:
+            # Create prompt for portfolio chat
+            prompt = self._create_chat_prompt(message, portfolio_context)
+            
+            # Get response from OpenAI
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """You are an expert financial advisor and portfolio analyst. You provide personalized investment advice based on the user's portfolio data and market knowledge. 
+
+Key guidelines:
+- Be conversational but professional
+- Use specific data from their portfolio when relevant
+- Provide actionable insights and recommendations
+- Explain complex concepts in simple terms
+- Always consider their risk profile and investment goals
+- Use emojis sparingly but appropriately
+- Keep responses concise but informative (2-4 sentences typically)"""
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                max_tokens=400,
+                temperature=0.7
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            print(f"❌ OpenAI portfolio chat failed: {str(e)}")
+            return self._generate_basic_chat_response(message, portfolio_context)
+    
+    def _create_chat_prompt(self, message: str, portfolio_context: dict) -> str:
+        """Create a prompt for portfolio chat."""
+        
+        # Extract key portfolio metrics
+        portfolio_name = portfolio_context.get("portfolio_name", "Portfolio")
+        total_value = portfolio_context.get("total_value", 0)
+        total_invested = portfolio_context.get("total_invested", 0)
+        gain_loss = portfolio_context.get("gain_loss", 0)
+        gain_loss_percent = portfolio_context.get("gain_loss_percent", 0)
+        holdings_count = portfolio_context.get("holdings_count", 0)
+        risk_profile = portfolio_context.get("risk_profile", "moderate")
+        investment_goal = portfolio_context.get("investment_goal", "growth")
+        
+        # Build holdings summary
+        holdings_summary = ""
+        holdings = portfolio_context.get("holdings", [])
+        if holdings:
+            top_holdings = sorted(holdings, key=lambda x: x.get("total_value", 0), reverse=True)[:5]
+            holdings_summary = "\nTop Holdings:\n"
+            for holding in top_holdings:
+                ticker = holding.get("ticker", "")
+                name = holding.get("name", "")
+                sector = holding.get("sector", "")
+                total_val = holding.get("total_value", 0)
+                gain_loss_pct = holding.get("gain_loss_percent", 0)
+                holdings_summary += f"- {ticker} ({name}) - {sector}: ${total_val:,.2f} ({gain_loss_pct:+.1f}%)\n"
+        
+        # Build analysis summary
+        analysis_summary = ""
+        analysis = portfolio_context.get("analysis", {})
+        if analysis:
+            sector_allocation = analysis.get("sector_allocation", {})
+            if sector_allocation:
+                analysis_summary += "\nSector Allocation:\n"
+                for sector, percentage in sorted(sector_allocation.items(), key=lambda x: x[1], reverse=True):
+                    analysis_summary += f"- {sector}: {percentage:.1f}%\n"
+            
+            recommendations = analysis.get("recommendations", [])
+            if recommendations:
+                analysis_summary += f"\nCurrent Recommendations:\n"
+                for rec in recommendations[:3]:
+                    analysis_summary += f"- {rec}\n"
+        
+        prompt = f"""
+USER QUESTION: "{message}"
+
+PORTFOLIO CONTEXT:
+Portfolio: {portfolio_name}
+Current Value: ${total_value:,.2f}
+Total Invested: ${total_invested:,.2f}
+Gain/Loss: ${gain_loss:,.2f} ({gain_loss_percent:+.1f}%)
+Holdings: {holdings_count} stocks
+Risk Profile: {risk_profile}
+Investment Goal: {investment_goal}
+{holdings_summary}
+{analysis_summary}
+
+Please provide a helpful, personalized response to the user's question based on their specific portfolio data and context. Be conversational but professional.
+"""
+        return prompt
+    
+    def _generate_basic_chat_response(self, message: str, portfolio_context: dict) -> str:
+        """Generate basic chat response when OpenAI is not available."""
+        
+        portfolio_name = portfolio_context.get("portfolio_name", "your portfolio")
+        total_value = portfolio_context.get("total_value", 0)
+        holdings_count = portfolio_context.get("holdings_count", 0)
+        gain_loss_percent = portfolio_context.get("gain_loss_percent", 0)
+        
+        message_lower = message.lower()
+        
+        if "performance" in message_lower or "how" in message_lower:
+            if gain_loss_percent > 0:
+                return f"Your portfolio '{portfolio_name}' is performing well with a {gain_loss_percent:.1f}% gain! With {holdings_count} holdings worth ${total_value:,.2f}, you're on a positive trajectory. Consider reviewing your top performers to understand what's driving the gains."
+            elif gain_loss_percent < 0:
+                return f"Your portfolio '{portfolio_name}' is currently down {abs(gain_loss_percent):.1f}%, but this is normal market fluctuation. With {holdings_count} holdings worth ${total_value:,.2f}, focus on your long-term strategy and consider if any rebalancing is needed."
+            else:
+                return f"Your portfolio '{portfolio_name}' is holding steady with {holdings_count} holdings worth ${total_value:,.2f}. This stability can be good for long-term growth - consider your investment timeline and goals."
+        
+        elif "holdings" in message_lower or "stocks" in message_lower:
+            return f"Your portfolio '{portfolio_name}' contains {holdings_count} stock holdings with a total value of ${total_value:,.2f}. I can help you analyze individual positions, sector allocation, or overall portfolio balance. What specific aspect would you like to explore?"
+        
+        elif "risk" in message_lower:
+            return f"Based on your portfolio of {holdings_count} holdings worth ${total_value:,.2f}, I can help assess your risk exposure. Diversification across sectors and proper position sizing are key to managing risk. Would you like me to analyze your sector allocation or individual position sizes?"
+        
+        else:
+            return f"I'm here to help with your portfolio '{portfolio_name}' which has {holdings_count} holdings worth ${total_value:,.2f}. I can analyze performance, suggest rebalancing, explain your holdings, or discuss investment strategies. What would you like to know more about?" 

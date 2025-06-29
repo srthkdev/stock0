@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const FINNHUB_WEBHOOK_SECRET = 'd1gp6b9r01qkdlvpj1d0'
+// Use environment variable for webhook secret instead of hardcoding it
+const FINNHUB_WEBHOOK_SECRET = process.env.FINNHUB_WEBHOOK_SECRET
 
 export async function POST(request: NextRequest) {
   try {
     // Verify the webhook secret
     const secret = request.headers.get('X-Finnhub-Secret')
+    
+    if (!FINNHUB_WEBHOOK_SECRET) {
+      console.error('FINNHUB_WEBHOOK_SECRET environment variable is not set')
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+    }
     
     if (secret !== FINNHUB_WEBHOOK_SECRET) {
       console.log('Invalid webhook secret')

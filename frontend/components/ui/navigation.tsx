@@ -20,6 +20,7 @@ import DynamicBreadcrumbs from "./breadcrumbs"
 const NAVIGATION = [
   { title: "Dashboard", href: "/dashboard" },
   { title: "Screener", href: "/screener" },
+  { title: "Portfolio", href: "/portfolio" },
 ]
 
 export default function Navigation() {

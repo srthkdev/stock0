@@ -1,4 +1,20 @@
-import type { PredefinedScreenerModules } from "@/node_modules/yahoo-finance2/dist/esm/src/modules/screener"
+// Define the PredefinedScreenerModules type locally since the import is not working
+type PredefinedScreenerModules = 
+  | "most_actives"
+  | "day_gainers" 
+  | "day_losers"
+  | "growth_technology_stocks"
+  | "most_shorted_stocks"
+  | "undervalued_growth_stocks"
+  | "aggressive_small_caps"
+  | "conservative_foreign_funds"
+  | "high_yield_bond"
+  | "portfolio_anchors"
+  | "small_cap_gainers"
+  | "solid_large_growth_funds"
+  | "solid_midcap_growth_funds"
+  | "top_mutual_funds"
+  | "undervalued_large_caps";
 
 type ScreenerOption = {
   label: string

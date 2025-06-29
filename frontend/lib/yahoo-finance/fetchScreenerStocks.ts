@@ -1,10 +1,37 @@
 import { unstable_noStore as noStore } from "next/cache"
-import type {
-  ScreenerOptions,
-  PredefinedScreenerModules,
-  ScreenerResult,
-} from "@/node_modules/yahoo-finance2/dist/esm/src/modules/screener"
 import yahooFinance from "yahoo-finance2"
+
+// Define types locally since the imports are not working
+type PredefinedScreenerModules = 
+  | "most_actives"
+  | "day_gainers" 
+  | "day_losers"
+  | "growth_technology_stocks"
+  | "most_shorted_stocks"
+  | "undervalued_growth_stocks"
+  | "aggressive_small_caps"
+  | "conservative_foreign_funds"
+  | "high_yield_bond"
+  | "portfolio_anchors"
+  | "small_cap_gainers"
+  | "solid_large_growth_funds"
+  | "solid_midcap_growth_funds"
+  | "top_mutual_funds"
+  | "undervalued_large_caps";
+
+interface ScreenerOptions {
+  scrIds: PredefinedScreenerModules;
+  count: number;
+  region: string;
+  lang: string;
+}
+
+interface ScreenerResult {
+  quotes: any[];
+  count: number;
+  start: number;
+  total: number;
+}
 
 const ITEMS_PER_PAGE = 40
 

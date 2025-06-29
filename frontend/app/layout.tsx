@@ -10,6 +10,9 @@ import { getCurrentUser } from "@/lib/appwrite/auth"
 import { AnimatedGridPattern } from "@/components/magicui/animated-grid-pattern"
 import { cn } from "@/lib/utils"
 
+// Force dynamic rendering since we use cookies
+export const dynamic = 'force-dynamic'
+
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -38,7 +41,7 @@ export default async function RootLayout({
             repeatDelay={1}
             className={cn(
               "[mask-image:radial-gradient(500px_circle_at_center,white,transparent)]",
-              "inset-x-0 inset-y-[-30%] h-[200%] skew-y-12",
+              "z-0",
             )}
           />
           <ThemeProvider

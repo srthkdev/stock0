@@ -1,15 +1,14 @@
 from typing import Dict, Any, List
-from langgraph_core.graph import StateGraph
-from langgraph_core.base import BaseState
+from langgraph.graph import StateGraph
 from pydantic import BaseModel, Field
 
-from ..models.request import StockPickRequest
-from ..models.response import StockPickResponse, StockRecommendation
-from ..services.picker import StockPicker
-from ..services.openai_agent import OpenAIAgent
+from models.request import StockPickRequest
+from models.response import StockPickResponse, StockRecommendation
+from services.picker import StockPicker
+from services.openai_agent import OpenAIAgent
 
 
-class StockPickerState(BaseState):
+class StockPickerState(BaseModel):
     """State for the stock picker graph."""
     request: StockPickRequest = Field(..., description="The original request")
     stocks_data: List[Dict[str, Any]] = Field(default_factory=list, description="Raw stock data")

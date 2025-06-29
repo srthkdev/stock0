@@ -7,6 +7,9 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
+// Force dynamic rendering for authenticated pages
+export const dynamic = 'force-dynamic'
+
 interface LandingPageProps {
   searchParams: {
     error?: string

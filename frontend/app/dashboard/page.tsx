@@ -20,6 +20,9 @@ import { fetchQuote } from "@/lib/finnhub/fetchQuote"
 import { fetchMarketNews } from "@/lib/finnhub/fetchNews"
 import type { Range } from "@/types/finnhub"
 
+// Force dynamic rendering for authenticated pages
+export const dynamic = 'force-dynamic'
+
 function isMarketOpen() {
   const now = new Date()
 
@@ -171,6 +174,28 @@ export default async function Dashboard({
           </Card>
         </div>
       </div>
+      <div>
+        <h2 className="py-4 text-xl font-medium">Markets</h2>
+        <Card className="flex flex-col gap-4 p-6 lg:flex-row">
+          <div className="w-full lg:w-1/2">
+            <Suspense fallback={<div>Loading...</div>}>
+              <DataTable columns={columns} data={resultsWithTitles} />
+            </Suspense>
+          </div>
+          <div className="w-full lg:w-1/2">
+            <Suspense fallback={<div>Loading...</div>}>
+              <MarketsChart ticker={ticker} range={range} />
+            </Suspense>
+          </div>
+        </Card>
+      </div>
+      <div className="flex flex-col gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <LatestNews />
+          </CardContent>
+        </Card>
+      </div>
       <div className="flex flex-col gap-4 lg:flex-row">
         <div className="w-full lg:w-1/2">
           <Card>
@@ -190,13 +215,6 @@ export default async function Dashboard({
           </Card>
         </div>
       </div>
-      <div className="flex flex-col gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <LatestNews />
-          </CardContent>
-        </Card>
-      </div>
       <div className="flex flex-col gap-4 lg:flex-row">
         <div className="w-full">
           <Card>
@@ -205,21 +223,6 @@ export default async function Dashboard({
             </CardContent>
           </Card>
         </div>
-      </div>
-      <div>
-        <h2 className="py-4 text-xl font-medium">Markets</h2>
-        <Card className="flex flex-col gap-4 p-6 lg:flex-row">
-          <div className="w-full lg:w-1/2">
-            <Suspense fallback={<div>Loading...</div>}>
-              <DataTable columns={columns} data={resultsWithTitles} />
-            </Suspense>
-          </div>
-          <div className="w-full lg:w-1/2">
-            <Suspense fallback={<div>Loading...</div>}>
-              <MarketsChart ticker={ticker} range={range} />
-            </Suspense>
-          </div>
-        </Card>
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -24,7 +24,7 @@ export default function DynamicBreadcrumbs() {
   const [isLoading, setIsLoading] = useState(false)
 
   // Parse the pathname to determine breadcrumb segments
-  const getBreadcrumbSegments = async (): Promise<BreadcrumbSegment[]> => {
+  const getBreadcrumbSegments = useCallback(async (): Promise<BreadcrumbSegment[]> => {
     const segments: BreadcrumbSegment[] = []
 
     // Always start with Stock0
@@ -58,6 +58,15 @@ export default function DynamicBreadcrumbs() {
       })
     }
 
+    // Handle portfolio route
+    if (pathSegments[0] === "portfolio") {
+      segments.push({
+        title: "Portfolio",
+        href: pathSegments.length === 1 ? undefined : "/portfolio",
+        isCurrentPage: pathSegments.length === 1,
+      })
+    }
+
     // Handle stocks route
     if (pathSegments[0] === "stocks" && pathSegments.length >= 2) {
       const ticker = pathSegments[1].toUpperCase()
@@ -77,7 +86,7 @@ export default function DynamicBreadcrumbs() {
     }
 
     return segments
-  }
+  }, [pathname, stockName])
 
   // Fetch stock name when on stock page
   useEffect(() => {
@@ -109,7 +118,7 @@ export default function DynamicBreadcrumbs() {
 
   useEffect(() => {
     getBreadcrumbSegments().then(setSegments)
-  }, [pathname, stockName])
+  }, [pathname, stockName, getBreadcrumbSegments])
 
   // Only show breadcrumbs on stock pages
   const pathSegments = pathname.split("/").filter(Boolean)
