@@ -22,6 +22,11 @@ from datetime import datetime
 # Load environment variables
 load_dotenv()
 
+# Stock picker imports
+from models.request import StockPickRequest
+from models.response import StockPickResponse
+from graph.stock_picker_graph import StockPickerGraph
+
 # =============================================================================
 # 🏷️ NEWS CATEGORIZER
 # =============================================================================
@@ -267,8 +272,8 @@ def create_fastapi_app():
     from fastapi.middleware.cors import CORSMiddleware
     
     app = FastAPI(
-        title="Financial News API",
-        description="Get categorized financial news for different time periods",
+        title="Smart Stock Portfolio API",
+        description="Get categorized financial news and smart stock portfolio recommendations",
         version="1.0.0"
     )
     
@@ -281,14 +286,16 @@ def create_fastapi_app():
     )
     
     news_assistant = FinancialNewsAssistant()
+    stock_picker_graph = StockPickerGraph()
     
     @app.get("/")
     async def root():
         """API information."""
         return {
-            "message": "🇺🇸 US Financial News API",
+            "message": "🚀 Smart Stock Portfolio API",
             "version": "1.0.0",
             "endpoints": {
+                "/api/stock-pick": "POST - Smart stock portfolio recommendations",
                 "/api/news/day": "Today's top 5 US financial news",
                 "/api/news/week": "This week's top 5 US financial news", 
                 "/api/news/month": "This month's top 5 US financial news",
@@ -301,11 +308,37 @@ def create_fastapi_app():
     async def health_check():
         """Health check endpoint."""
         tavily_status = "✅ Connected" if os.getenv("TAVILY_API_KEY") else "❌ No API Key"
+        finnhub_status = "✅ Connected" if os.getenv("FINNHUB_API_KEY") else "❌ No API Key"
+        openai_status = "✅ Connected" if os.getenv("OPENAI_API_KEY") else "❌ No API Key"
         return {
             "status": "healthy",
-            "tavily_api": tavily_status,
+            "services": {
+                "tavily_api": tavily_status,
+                "finnhub_api": finnhub_status,
+                "openai_api": openai_status
+            },
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
+
+    @app.post("/api/stock-pick", response_model=StockPickResponse)
+    async def stock_pick(request: StockPickRequest):
+        """
+        Smart stock portfolio recommendations using LangGraph orchestration.
+        
+        Analyzes your budget, risk profile, and sector preferences to recommend
+        a diversified portfolio of US stocks with personalized reasoning.
+        """
+        try:
+            # Process the request through LangGraph
+            response = await stock_picker_graph.process_request(request)
+            
+            return response
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Stock picking failed: {str(e)}"
+            )
 
     @app.get("/api/news/day")
     async def get_day_news():
