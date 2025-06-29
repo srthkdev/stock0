@@ -7,6 +7,8 @@ import Navigation from "@/components/ui/navigation"
 import Footer from "@/components/ui/footer"
 import { UserProvider } from "@/lib/appwrite/user-provider"
 import { getCurrentUser } from "@/lib/appwrite/auth"
+import { AnimatedGridPattern } from "@/components/magicui/animated-grid-pattern"
+import { cn } from "@/lib/utils"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -27,8 +29,18 @@ export default async function RootLayout({
     <ViewTransitions>
       <html lang="en" suppressHydrationWarning>
         <body
-          className={`${inter.className} min-h-screen bg-background pb-6 antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black`}
+          className={`${inter.className} min-h-screen bg-background pb-6 antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black relative`}
         >
+          <AnimatedGridPattern
+            numSquares={30}
+            maxOpacity={0.1}
+            duration={3}
+            repeatDelay={1}
+            className={cn(
+              "[mask-image:radial-gradient(500px_circle_at_center,white,transparent)]",
+              "inset-x-0 inset-y-[-30%] h-[200%] skew-y-12",
+            )}
+          />
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -36,9 +48,11 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
             <UserProvider initialUser={user}>
-              <Navigation />
-              <main className="container">{children}</main>
-              <Footer />
+              <div className="relative z-10">
+                <Navigation />
+                <main className="container">{children}</main>
+                <Footer />
+              </div>
             </UserProvider>
           </ThemeProvider>
         </body>
