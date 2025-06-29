@@ -74,25 +74,27 @@ export default async function SectorPerformance() {
   sectorData.unshift(allSectors)
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      {sectorData.map((sector: Sector) => (
-        <div
-          key={sector.sector}
-          className="flex w-full flex-row items-center justify-between text-sm"
-        >
+    <div className="relative overflow-hidden rounded-lg">
+      <div className="relative grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {sectorData.map((sector: Sector) => (
+          <div
+            key={sector.sector}
+            className="flex w-full flex-row items-center justify-between text-sm"
+          >
           <span className="font-medium">{sector.sector}</span>
           <span
             className={cn(
               "w-[4rem] min-w-fit rounded-md px-2 py-0.5 text-right transition-colors",
               parseFloat(sector.changesPercentage) > 0
-                ? "bg-gradient-to-l from-green-300 text-green-800 dark:from-green-950 dark:text-green-400"
-                : "bg-gradient-to-l from-red-300 text-red-800 dark:from-red-950 dark:text-red-500"
+                ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-400"
+                : "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-500"
             )}
           >
             {parseFloat(sector.changesPercentage).toFixed(2) + "%"}
           </span>
-        </div>
-      ))}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

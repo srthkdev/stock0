@@ -265,6 +265,10 @@ def create_fastapi_app():
     """Create FastAPI app for server mode."""
     from fastapi import FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
+    from pydantic import BaseModel
+    
+    class ArticleRequest(BaseModel):
+        url: str
     
     app = FastAPI(
         title="Financial News API",
@@ -293,6 +297,7 @@ def create_fastapi_app():
                 "/api/news/week": "This week's top 5 US financial news", 
                 "/api/news/month": "This month's top 5 US financial news",
                 "/api/news/all": "All periods combined",
+                "/api/article/full": "Get full article content from URL",
                 "/health": "API health status"
             }
         }
@@ -415,6 +420,124 @@ def create_fastapi_app():
             return {
                 "success": False,
                 "error": str(e),
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            }
+
+    @app.post("/api/article/full")
+    async def get_full_article(request: ArticleRequest):
+        """Get AI-powered summary of article with key numbers and details."""
+        try:
+            url = request.url
+            if not url:
+                return {
+                    "success": False,
+                    "error": "URL is required",
+                    "timestamp": datetime.utcnow().isoformat() + "Z"
+                }
+            
+            fetcher = FinancialNewsAssistant()
+            
+            if not fetcher.client:
+                return {
+                    "success": False,
+                    "error": "Tavily API not available",
+                    "content": "Article summary is not available. Tavily API is not configured.",
+                    "timestamp": datetime.utcnow().isoformat() + "Z"
+                }
+            
+            # Extract the article title/topic from URL for better search
+            import re
+            url_parts = url.split('/')
+            topic_hints = []
+            for part in url_parts:
+                if len(part) > 3 and not part.isdigit():
+                    # Clean up URL segments to extract topic hints
+                    clean_part = re.sub(r'[^a-zA-Z0-9\s]', ' ', part).strip()
+                    if clean_part and len(clean_part.split()) <= 5:
+                        topic_hints.append(clean_part)
+            
+            # Create a search query to get comprehensive information about the article topic
+            search_query = f"financial news analysis summary {' '.join(topic_hints[:3])} stock market earnings revenue profit numbers statistics data"
+            
+            # Use Tavily to get comprehensive information about the topic
+            result = await asyncio.to_thread(
+                fetcher.client.search,
+                query=search_query,
+                search_depth="advanced",
+                max_results=3,
+                include_answer=True,
+                include_raw_content=False,
+                include_domains=[
+                    "cnbc.com", "marketwatch.com", "yahoo.com", "bloomberg.com", 
+                    "reuters.com", "wsj.com", "forbes.com", "seekingalpha.com"
+                ]
+            )
+            
+            # Generate AI summary from search results
+            summary_parts = []
+            
+            if result.get("answer"):
+                summary_parts.append("## Key Insights")
+                summary_parts.append(result["answer"])
+                summary_parts.append("")
+            
+            if result.get("results"):
+                summary_parts.append("## Market Analysis")
+                for i, item in enumerate(result["results"][:2], 1):
+                    title = item.get("title", "")
+                    content = item.get("content", "")
+                    
+                    # Extract numbers and key metrics from content
+                    numbers = re.findall(r'[\$€£¥]?[\d,]+\.?\d*[%\$€£¥BMK]?', content)
+                    percentages = re.findall(r'\d+\.?\d*%', content)
+                    
+                    summary_parts.append(f"**{title}**")
+                    
+                    # Add content with emphasis on numbers
+                    enhanced_content = content
+                    for num in set(numbers + percentages):
+                        if len(num) > 1:  # Skip single digits
+                            enhanced_content = enhanced_content.replace(num, f"**{num}**")
+                    
+                    summary_parts.append(enhanced_content[:300] + "..." if len(enhanced_content) > 300 else enhanced_content)
+                    summary_parts.append("")
+            
+            # Add key metrics section if we found numbers
+            all_numbers = []
+            for item in result.get("results", []):
+                content = item.get("content", "")
+                numbers = re.findall(r'[\$€£¥]?[\d,]+\.?\d*[%\$€£¥BMK]?', content)
+                all_numbers.extend(numbers)
+            
+            if all_numbers:
+                unique_numbers = list(set([num for num in all_numbers if len(num) > 1]))[:8]
+                if unique_numbers:
+                    summary_parts.append("## Key Numbers")
+                    summary_parts.append("Important figures mentioned in related coverage:")
+                    for num in unique_numbers:
+                        summary_parts.append(f"• **{num}**")
+                    summary_parts.append("")
+            
+            # Combine all parts
+            final_summary = "\n".join(summary_parts)
+            
+            if not final_summary.strip():
+                final_summary = "Unable to generate a comprehensive summary for this article. The content may be behind a paywall or the topic may be too specific."
+            
+            return {
+                "success": True,
+                "content": final_summary,
+                "url": url,
+                "type": "ai_summary",
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            }
+                
+        except Exception as e:
+            print(f"❌ Error generating article summary: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "content": "An error occurred while generating the article summary. Please try again or visit the original source.",
                 "timestamp": datetime.utcnow().isoformat() + "Z"
             }
     

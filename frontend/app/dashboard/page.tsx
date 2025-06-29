@@ -12,6 +12,10 @@ import MarketsChart from "@/components/chart/MarketsChart"
 import Link from "next/link"
 import { columns } from "@/components/stocks/markets/columns"
 import SectorPerformance from "@/components/stocks/SectorPerformance"
+import GainersLosersActive from "@/components/stocks/GainersLosersActive"
+import EquitySectors from "@/components/stocks/EquitySectors"
+import Standouts from "@/components/stocks/Standouts"
+import LatestNews from "@/components/stocks/LatestNews"
 import { fetchQuote } from "@/lib/finnhub/fetchQuote"
 import { fetchMarketNews } from "@/lib/finnhub/fetchNews"
 import type { Range } from "@/types/finnhub"
@@ -163,6 +167,41 @@ export default async function Dashboard({
               <Suspense fallback={<div>Loading...</div>}>
                 <SectorPerformance />
               </Suspense>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      <div className="flex flex-col gap-4 lg:flex-row">
+        <div className="w-full lg:w-1/2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Market Movers</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <GainersLosersActive />
+            </CardContent>
+          </Card>
+        </div>
+        <div className="w-full lg:w-1/2">
+          <Card>
+            <CardContent className="pt-6">
+              <EquitySectors />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      <div className="flex flex-col gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <LatestNews />
+          </CardContent>
+        </Card>
+      </div>
+      <div className="flex flex-col gap-4 lg:flex-row">
+        <div className="w-full">
+          <Card>
+            <CardContent className="pt-6">
+              <Standouts />
             </CardContent>
           </Card>
         </div>
