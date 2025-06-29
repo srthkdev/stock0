@@ -11,8 +11,8 @@ import { scaleLinear } from "@visx/scale"
 import { ParentSize } from "@visx/responsive"
 import { Button } from "../ui/button"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { DEFAULT_RANGE } from "@/lib/yahoo-finance/constants"
-import { Range } from "@/lib/yahoo-finance/types"
+import { DEFAULT_RANGE } from "@/lib/finnhub/constants"
+import type { Range } from "@/types/finnhub"
 
 // UTILS
 const toDate = (d: any) => +new Date(d?.date || d)

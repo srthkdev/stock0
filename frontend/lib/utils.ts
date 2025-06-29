@@ -1,12 +1,11 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import type { Interval } from "@/types/yahoo-finance"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function getStartDate(interval: Interval) {
+export function getStartDate(interval: string) {
   const today = new Date()
   let subtractDays
 

@@ -3,15 +3,12 @@ import CompanySummaryCard from "@/app/stocks/[ticker]/components/CompanySummaryC
 import FinanceSummary from "@/app/stocks/[ticker]/components/FinanceSummary"
 import News from "@/app/stocks/[ticker]/components/News"
 import { Card, CardContent } from "@/components/ui/card"
-import { DEFAULT_INTERVAL, DEFAULT_RANGE } from "@/lib/yahoo-finance/constants"
-import {
-  validateInterval,
-  validateRange,
-} from "@/lib/yahoo-finance/fetchChartData"
-import { Interval } from "@/types/yahoo-finance"
+import { DEFAULT_RANGE, VALID_RANGES } from "@/lib/finnhub/constants"
 import { Suspense } from "react"
 import type { Metadata } from "next"
-import { fetchQuote } from "@/lib/yahoo-finance/fetchQuote"
+import { fetchQuote } from "@/lib/finnhub/fetchQuote"
+import { fetchCompanyProfile } from "@/lib/finnhub/fetchCompanyProfile"
+import type { Range } from "@/types/finnhub"
 
 type Props = {
   params: {
@@ -20,36 +17,34 @@ type Props = {
   searchParams?: {
     ticker?: string
     range?: string
-    interval?: string
   }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ticker = params.ticker
 
-  const quoteData = await fetchQuote(ticker)
-  const regularMarketPrice = quoteData.regularMarketPrice?.toLocaleString(
-    "en-US",
-    {
-      style: "currency",
-      currency: "USD",
-    }
-  )
+  const [quoteData, profileData] = await Promise.all([
+    fetchQuote(ticker),
+    fetchCompanyProfile(ticker)
+  ])
+  
+  const currentPrice = quoteData.c?.toLocaleString("en-US", {
+    style: "currency",
+    currency: profileData.currency || "USD",
+  })
 
   return {
-    title: `${ticker} ${regularMarketPrice}`,
-    description: `Stocks page for ${ticker}`,
-    keywords: [ticker, "stocks"],
+    title: `${ticker} ${currentPrice} - ${profileData.name}`,
+    description: `Real-time stock data for ${profileData.name} (${ticker})`,
+    keywords: [ticker, "stocks", profileData.name],
   }
 }
 
 export default async function StocksPage({ params, searchParams }: Props) {
   const ticker = params.ticker
-  const range = validateRange(searchParams?.range || DEFAULT_RANGE)
-  const interval = validateInterval(
-    range,
-    (searchParams?.interval as Interval) || DEFAULT_INTERVAL
-  )
+  const range = VALID_RANGES.includes(searchParams?.range as Range) 
+    ? (searchParams?.range as Range) 
+    : DEFAULT_RANGE
 
   return (
     <div>
@@ -62,7 +57,7 @@ export default async function StocksPage({ params, searchParams }: Props) {
               </div>
             }
           >
-            <StockChart ticker={ticker} range={range} interval={interval} />
+            <StockChart ticker={ticker} range={range} />
           </Suspense>
           <Suspense
             fallback={

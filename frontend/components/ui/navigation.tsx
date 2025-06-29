@@ -10,11 +10,12 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 import Link from "next/link"
-import GoBack from "./go-back"
+
 import { usePathname } from "next/navigation"
 import CommandMenu from "./command-menu"
 import { AuthButton } from "./auth-button"
 import { useUser } from "@/lib/appwrite/user-provider"
+import DynamicBreadcrumbs from "./breadcrumbs"
 
 const NAVIGATION = [
   { title: "Dashboard", href: "/dashboard" },
@@ -28,7 +29,7 @@ export default function Navigation() {
   // Show different navigation for landing vs authenticated pages
   const showFullNav = pathname !== "/"
 
-  return (
+    return (
     <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container">
         <div className="flex w-full flex-row justify-between py-4">
@@ -36,7 +37,7 @@ export default function Navigation() {
             <Link href="/" className="text-xl font-bold">
               Stock0
             </Link>
-            {showFullNav && pathname !== "/" && <GoBack />}
+            {showFullNav && user && <DynamicBreadcrumbs />}
           </div>
           <div className="flex flex-row items-center gap-2">
             {showFullNav && user && (

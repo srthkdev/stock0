@@ -1,5 +1,4 @@
 import { DataTable } from "@/components/stocks/markets/data-table"
-import yahooFinance from "yahoo-finance2"
 import {
   Card,
   CardContent,
@@ -7,18 +6,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { DEFAULT_INTERVAL, DEFAULT_RANGE } from "@/lib/yahoo-finance/constants"
-import { Interval } from "@/types/yahoo-finance"
+import { DEFAULT_RANGE, DASHBOARD_TICKERS } from "@/lib/finnhub/constants"
 import { Suspense } from "react"
 import MarketsChart from "@/components/chart/MarketsChart"
 import Link from "next/link"
 import { columns } from "@/components/stocks/markets/columns"
 import SectorPerformance from "@/components/stocks/SectorPerformance"
-import {
-  validateInterval,
-  validateRange,
-} from "@/lib/yahoo-finance/fetchChartData"
-import { fetchStockSearch } from "@/lib/yahoo-finance/fetchStockSearch"
+import { fetchQuote } from "@/lib/finnhub/fetchQuote"
+import { fetchMarketNews } from "@/lib/finnhub/fetchNews"
+import type { Range } from "@/types/finnhub"
 
 function isMarketOpen() {
   const now = new Date()
@@ -49,30 +45,22 @@ function isMarketOpen() {
   }
 }
 
-const tickersFutures = [
-  { symbol: "ES=F", shortName: "S&P 500 Futures" },
-  { symbol: "NQ=F", shortName: "NASDAQ Futures" },
-  { symbol: "YM=F", shortName: "Dow Jones Futures" },
-  { symbol: "RTY=F", shortName: "Russell 2000 Futures" },
-  { symbol: "CL=F", shortName: "Crude Oil" },
-  { symbol: "GC=F", shortName: "Gold" },
-  { symbol: "SI=F", shortName: "Silver" },
-  { symbol: "EURUSD=X", shortName: "EUR/USD" },
-  { symbol: "^TNX", shortName: "10 Year Bond" },
-  { symbol: "BTC-USD", shortName: "Bitcoin" },
+// Major market indices
+const majorIndices = [
+  { symbol: "SPY", shortName: "S&P 500" },
+  { symbol: "QQQ", shortName: "NASDAQ" },
+  { symbol: "DIA", shortName: "Dow Jones" },
+  { symbol: "IWM", shortName: "Russell 2000" },
 ]
 
-const tickerAfterOpen = [
-  { symbol: "^GSPC", shortName: "S&P 500" },
-  { symbol: "^IXIC", shortName: "NASDAQ" },
-  { symbol: "^DJI", shortName: "Dow Jones" },
-  { symbol: "^RUT", shortName: "Russell 2000" },
-  { symbol: "CL=F", shortName: "Crude Oil" },
-  { symbol: "GC=F", shortName: "Gold" },
-  { symbol: "SI=F", shortName: "Silver" },
-  { symbol: "EURUSD=X", shortName: "EUR/USD" },
-  { symbol: "^TNX", shortName: "10 Year Bond" },
-  { symbol: "BTC-USD", shortName: "Bitcoin" },
+// Popular stocks
+const popularStocks = [
+  { symbol: "AAPL", shortName: "Apple Inc." },
+  { symbol: "MSFT", shortName: "Microsoft Corp." },
+  { symbol: "GOOGL", shortName: "Alphabet Inc." },
+  { symbol: "AMZN", shortName: "Amazon.com Inc." },
+  { symbol: "TSLA", shortName: "Tesla Inc." },
+  { symbol: "META", shortName: "Meta Platforms Inc." },
 ]
 
 function getMarketSentiment(changePercentage: number | undefined) {
@@ -94,31 +82,30 @@ export default async function Dashboard({
   searchParams?: {
     ticker?: string
     range?: string
-    interval?: string
   }
 }) {
-  const tickers = isMarketOpen() ? tickerAfterOpen : tickersFutures
+  const tickers = isMarketOpen() ? [...majorIndices, ...popularStocks] : DASHBOARD_TICKERS
 
   const ticker = searchParams?.ticker || tickers[0].symbol
-  const range = validateRange(searchParams?.range || DEFAULT_RANGE)
-  const interval = validateInterval(
-    range,
-    (searchParams?.interval as Interval) || DEFAULT_INTERVAL
-  )
-  const news = await fetchStockSearch("^DJI", 1)
+  const range = (searchParams?.range as Range) || DEFAULT_RANGE
+  
+  const [news, ...quotes] = await Promise.all([
+    fetchMarketNews(1),
+    ...tickers.map(({ symbol }) => fetchQuote(symbol))
+  ])
 
-  const promises = tickers.map(({ symbol }) =>
-    yahooFinance.quoteCombine(symbol)
-  )
-  const results = await Promise.all(promises)
-
-  const resultsWithTitles = results.map((result, index) => ({
-    ...result,
-    shortName: tickers[index].shortName,
-  }))
+  const resultsWithTitles = quotes.map((quote, index) => {
+    return {
+      symbol: tickers[index].symbol,
+      shortName: tickers[index].shortName,
+      regularMarketPrice: quote.c,
+      regularMarketChange: quote.d,
+      regularMarketChangePercent: quote.dp,
+    } as any
+  })
 
   const marketSentiment = getMarketSentiment(
-    resultsWithTitles[0].regularMarketChangePercent
+    resultsWithTitles[0]?.regularMarketChangePercent
   )
 
   const sentimentColor =
@@ -146,17 +133,19 @@ export default async function Dashboard({
                 <strong className={sentimentColor}>{marketSentiment}</strong>
               </CardTitle>
             </CardHeader>
-            {news.news[0] && news.news[0].title && (
+            {news[0] && news[0].headline && (
               <CardFooter className="flex-col items-start">
                 <p className="mb-2 text-sm font-semibold text-neutral-500 dark:text-neutral-500">
                   What you need to know today
                 </p>
                 <Link
                   prefetch={false}
-                  href={news.news[0].link}
+                  href={news[0].url}
                   className="text-lg font-extrabold"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  {news.news[0].title}
+                  {news[0].headline}
                 </Link>
               </CardFooter>
             )}
@@ -188,7 +177,7 @@ export default async function Dashboard({
           </div>
           <div className="w-full lg:w-1/2">
             <Suspense fallback={<div>Loading...</div>}>
-              <MarketsChart ticker={ticker} range={range} interval={interval} />
+              <MarketsChart ticker={ticker} range={range} />
             </Suspense>
           </div>
         </Card>

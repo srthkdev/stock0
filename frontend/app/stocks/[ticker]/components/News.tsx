@@ -1,4 +1,4 @@
-import { fetchStockSearch } from "@/lib/yahoo-finance/fetchStockSearch"
+import { fetchCompanyNews } from "@/lib/finnhub/fetchNews"
 import Link from "next/link"
 import {
   differenceInMinutes,
@@ -6,8 +6,8 @@ import {
   differenceInDays,
 } from "date-fns"
 
-function timeAgo(publishTime: string) {
-  const publishDate = new Date(publishTime)
+function timeAgo(timestamp: number) {
+  const publishDate = new Date(timestamp * 1000)
   const now = new Date()
 
   const diffInMinutes = differenceInMinutes(now, publishDate)
@@ -24,24 +24,24 @@ function timeAgo(publishTime: string) {
 }
 
 export default async function News({ ticker }: { ticker: string }) {
-  const newsData = await fetchStockSearch(ticker)
-  const url = `https://uk.finance.yahoo.com/quote/${ticker}`
+  const newsData = await fetchCompanyNews(ticker, 5)
+  const url = `https://finnhub.io/`
 
   return (
     <div className="w-4/5">
-      {newsData.news.length === 0 && (
+      {newsData.length === 0 && (
         <div className="py-4 text-center text-sm font-medium text-muted-foreground">
           No Recent Stories
         </div>
       )}
-      {newsData.news.length > 0 && (
+      {newsData.length > 0 && (
         <>
           <Link
             href={url}
             prefetch={false}
             className="group flex w-fit flex-row items-center gap-2 pb-4 text-sm font-medium text-blue-500"
           >
-            See More Data from Yahoo Finance
+            See More Data from Finnhub
             <i>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -60,20 +60,21 @@ export default async function News({ ticker }: { ticker: string }) {
             </i>
           </Link>
           <div className="flex flex-col gap-2">
-            {newsData.news.map((article) => (
+            {newsData.map((article) => (
               <Link
-                key={article.uuid}
-                href={article.link}
+                key={article.id}
+                href={article.url}
                 prefetch={false}
                 className="flex flex-col gap-1"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 <span className="text-sm font-medium text-muted-foreground">
-                  {article.publisher} -{" "}
-                  {timeAgo(article.providerPublishTime.toISOString())}
+                  {article.source} - {timeAgo(article.datetime)}
                 </span>
-                <span className="font-semibold">{article.title}</span>
+                <span className="font-semibold">{article.headline}</span>
                 <span className="text-sm font-medium text-muted-foreground">
-                  {article.published_at}
+                  {article.summary.substring(0, 150)}...
                 </span>
               </Link>
             ))}

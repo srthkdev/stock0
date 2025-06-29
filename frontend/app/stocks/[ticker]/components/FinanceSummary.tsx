@@ -1,4 +1,5 @@
-import { fetchQuoteSummary } from "@/lib/yahoo-finance/fetchQuoteSummary"
+import { fetchBasicFinancials } from "@/lib/finnhub/fetchBasicFinancials"
+import { fetchQuote } from "@/lib/finnhub/fetchQuote"
 
 function formatNumber(num: number) {
   if (num >= 1e12) {
@@ -11,41 +12,95 @@ function formatNumber(num: number) {
     return num.toString()
   }
 }
+
 const keysToDisplay = [
   {
-    key: "open",
+    key: "o",
     title: "Open",
+    source: "quote"
   },
-  { key: "dayHigh", title: "High" },
-  { key: "dayLow", title: "Low" },
-  { key: "volume", title: "Vol", format: formatNumber },
-  { key: "trailingPE", title: "P/E" },
-  { key: "marketCap", title: "Mkt cap", format: formatNumber },
-  { key: "fiftyTwoWeekHigh", title: "52W H" },
-  { key: "fiftyTwoWeekLow", title: "52W L" },
-  { key: "averageVolume", title: "Avg Vol", format: formatNumber },
+  { 
+    key: "h", 
+    title: "High",
+    source: "quote"
+  },
+  { 
+    key: "l", 
+    title: "Low",
+    source: "quote"
+  },
+  { 
+    key: "52WeekHigh", 
+    title: "52W H",
+    source: "financials"
+  },
+  { 
+    key: "52WeekLow", 
+    title: "52W L",
+    source: "financials"
+  },
+  { 
+    key: "marketCapitalization", 
+    title: "Mkt cap", 
+    format: formatNumber,
+    source: "financials"
+  },
+  { 
+    key: "peExclTTM", 
+    title: "P/E",
+    source: "financials"
+  },
+  { 
+    key: "beta", 
+    title: "Beta",
+    source: "financials"
+  },
+  { 
+    key: "epsBasicExclExtraItemsTTM", 
+    title: "EPS",
+    source: "financials"
+  },
   {
-    key: "dividendYield",
-    title: "Div yield",
-    format: (data: number) => `${(data * 100).toFixed(2)}%`,
+    key: "10DayAverageTradingVolume",
+    title: "Avg Vol",
+    format: formatNumber,
+    source: "financials"
   },
-  { key: "beta", title: "Beta" },
-  { key: "trailingEps", title: "EPS", section: "defaultKeyStatistics" },
+  {
+    key: "ptbvAnnual",
+    title: "P/B",
+    source: "financials"
+  },
+  {
+    key: "currentRatio",
+    title: "Current Ratio",
+    source: "financials"
+  }
 ]
 
 export default async function FinanceSummary({ ticker }: { ticker: string }) {
-  const financeSummaryData = await fetchQuoteSummary(ticker)
+  const [quoteData, financialsData] = await Promise.all([
+    fetchQuote(ticker),
+    fetchBasicFinancials(ticker)
+  ])
 
   return (
     <div className="grid grid-flow-col grid-rows-6 gap-4 md:grid-rows-3">
       {keysToDisplay.map((item) => {
-        const section = item.section || "summaryDetail"
-        const data = financeSummaryData?.[section]?.[item.key] ?? undefined
+        let data: any = undefined
+        
+        if (item.source === "quote") {
+          data = (quoteData as any)[item.key]
+        } else if (item.source === "financials") {
+          data = (financialsData?.metric as any)?.[item.key]
+        }
+        
         let formattedData = "N/A"
 
-        if (data !== undefined && !isNaN(data)) {
-          formattedData = item.format ? item.format(data) : data
+        if (data !== undefined && !isNaN(data) && data !== null) {
+          formattedData = item.format ? item.format(data) : data.toString()
         }
+        
         return (
           <div
             key={item.key}
