@@ -1,0 +1,48 @@
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { ViewTransitions } from "next-view-transitions"
+import { ThemeProvider } from "@/components/ui/theme-provider"
+import Navigation from "@/components/ui/navigation"
+import Footer from "@/components/ui/footer"
+import { UserProvider } from "@/lib/appwrite/user-provider"
+import { getCurrentUser } from "@/lib/appwrite/auth"
+
+const inter = Inter({ subsets: ["latin"] })
+
+export const metadata: Metadata = {
+  title: "Stock0: Stock Market Dashboard & Analysis",
+  description:
+    "Stock0 is your comprehensive stock market dashboard with real-time data, market analysis, and portfolio management tools.",
+}
+
+export default async function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  const user = await getCurrentUser()
+
+  return (
+    <ViewTransitions>
+      <html lang="en" suppressHydrationWarning>
+        <body
+          className={`${inter.className} min-h-screen bg-background pb-6 antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black`}
+        >
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <UserProvider initialUser={user}>
+              <Navigation />
+              <main className="container">{children}</main>
+              <Footer />
+            </UserProvider>
+          </ThemeProvider>
+        </body>
+      </html>
+    </ViewTransitions>
+  )
+}
