@@ -3,11 +3,11 @@ backend/
 backend/**
 
 # Ignore Railway config files
-nixpacks.toml
 railway.json
 Procfile
+main.py
 
-# Ignore root level configs not needed for frontend
+# Ignore root level Python files
 *.py
 requirements.txt
 
@@ -29,7 +29,7 @@ yarn-error.log*
 node_modules/
 */node_modules/
 
-# Ignore build outputs
+# Ignore build outputs not in frontend
 .next/
 out/
 dist/

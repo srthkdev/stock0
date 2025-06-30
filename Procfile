@@ -1,1 +1,1 @@
-web: cd backend && uvicorn app:create_fastapi_app --factory --host 0.0.0.0 --port $PORT 
+web: python main.py 
