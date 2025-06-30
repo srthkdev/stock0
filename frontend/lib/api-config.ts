@@ -2,8 +2,11 @@
  * Centralized API configuration for the frontend
  */
 
-// Get the backend API URL from environment variables
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Get the backend API URL from environment variables with fallbacks
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app') 
+    ? 'https://your-railway-app.up.railway.app' 
+    : 'http://localhost:8000');
 
 // News API URL (same as backend for now)
 export const NEWS_API_URL = process.env.NEXT_PUBLIC_NEWS_API_URL || API_BASE_URL;

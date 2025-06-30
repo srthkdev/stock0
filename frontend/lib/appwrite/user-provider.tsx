@@ -28,27 +28,15 @@ export function UserProvider({
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(initialUser)
   const [loading, setLoading] = useState(!initialUser)
 
-  const refreshUser = useCallback(async (retryCount = 0) => {
+  const refreshUser = useCallback(async () => {
     try {
       setLoading(true)
       const currentUser = await account.get()
-      console.log("User fetched successfully:", currentUser)
       setUser(currentUser)
     } catch (error: any) {
-      console.log("No authenticated user:", error?.message || error)
-      
-      // If this is an OAuth redirect and we don't have a user yet, retry a few times
-      if (retryCount < 3 && window.location.pathname === '/dashboard') {
-        console.log(`Retrying user fetch in 500ms (attempt ${retryCount + 1}/3)`)
-        setTimeout(() => refreshUser(retryCount + 1), 500)
-        return
-      }
-      
       setUser(null)
     } finally {
-      if (retryCount === 0) { // Only set loading false on the initial call
-        setLoading(false)
-      }
+      setLoading(false)
     }
   }, [])
 
@@ -57,61 +45,6 @@ export function UserProvider({
       refreshUser()
     }
   }, [initialUser, refreshUser])
-
-  // Listen for URL changes to refresh user after OAuth redirect
-  useEffect(() => {
-    const handleFocus = () => {
-      if (!loading) {
-        refreshUser()
-      }
-    }
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && !loading) {
-        refreshUser()
-      }
-    }
-
-    // Refresh when window gains focus or becomes visible
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    
-    // Also refresh on page navigation
-    const handleBeforeUnload = () => {
-      refreshUser()
-    }
-    
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-    }
-  }, [loading, refreshUser])
-
-  // Refresh user on mount and after any route change
-  useEffect(() => {
-    refreshUser()
-  }, [refreshUser])
-
-  // Listen for storage events (like when cookies are cleared by sign out)
-  useEffect(() => {
-    const handleStorageChange = () => {
-      refreshUser()
-    }
-
-    // Listen for custom events that might indicate auth state changes
-    window.addEventListener('storage', handleStorageChange)
-    
-    // Also listen for popstate (back/forward navigation)
-    window.addEventListener('popstate', handleStorageChange)
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('popstate', handleStorageChange)
-    }
-  }, [refreshUser])
 
   return (
     <UserContext.Provider value={{ user, loading, setUser, refreshUser }}>
