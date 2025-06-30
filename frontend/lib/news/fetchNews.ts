@@ -39,7 +39,9 @@ export interface AllNewsResponse {
   error?: string
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://localhost:8000'
+import { NEWS_API_URL } from '@/lib/api-config';
+
+const API_BASE_URL = NEWS_API_URL;
 
 export async function fetchLatestNews(period: 'day' | 'week' | 'month' = 'day'): Promise<NewsArticle[]> {
   try {

@@ -666,9 +666,10 @@ if __name__ == "__main__":
         # Server mode
         import uvicorn
         print("🚀 Starting Financial News API Server...")
-        print("📊 Navigate to http://localhost:8000/docs for API documentation")
+        port = int(os.getenv("PORT", 8000))
+        print(f"📊 Starting server on port {port}")
         app = create_fastapi_app()
-        uvicorn.run(app, host="0.0.0.0", port=8000)
+        uvicorn.run(app, host="0.0.0.0", port=port)
     else:
         # Direct summary mode (default)
         print("🚀 Loading Financial News Summary...")

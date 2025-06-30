@@ -6,6 +6,7 @@ import { AIConversation, AIConversationContent, AIConversationScrollButton } fro
 import { AIMessage, AIMessageContent, AIMessageAvatar } from '@/components/ai/message';
 import { AIInput, AIInputTextarea, AIInputToolbar, AIInputSubmit } from '@/components/ai/input';
 import { AISuggestions, AISuggestion } from '@/components/ai/suggestions';
+import { API_ENDPOINTS } from '@/lib/api-config';
 
 interface Message {
   id: string;
@@ -57,7 +58,7 @@ export default function PortfolioChatbot() {
 
   const loadUserPortfolios = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/portfolio/demo_user_123');
+      const response = await fetch(API_ENDPOINTS.portfolio.getUserPortfolios('demo_user_123'));
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.portfolios.length > 0) {
@@ -111,7 +112,7 @@ export default function PortfolioChatbot() {
       }
 
       // Send chat request to backend
-      const response = await fetch('http://localhost:8000/api/portfolio/chat', {
+      const response = await fetch(API_ENDPOINTS.portfolio.chat, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

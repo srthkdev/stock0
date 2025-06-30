@@ -6,6 +6,7 @@ import { fetchLatestNews, type NewsArticle } from "@/lib/news/fetchNews"
 import Link from "next/link"
 import Modal from "@/components/ui/modal"
 import { ExternalLink, Bot, Sparkles, Loader2 } from "lucide-react"
+import { NEWS_API_URL } from "@/lib/api-config"
 
 // Simple markdown renderer for news content
 function renderMarkdown(text: string): string {
@@ -72,8 +73,7 @@ function formatSnippet(snippet: string): string {
 // Fetch full article content from Tavily
 async function fetchFullArticleContent(url: string): Promise<string> {
   try {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://localhost:8000'
-    const response = await fetch(`${API_BASE_URL}/api/article/full`, {
+    const response = await fetch(`${NEWS_API_URL}/api/article/full`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

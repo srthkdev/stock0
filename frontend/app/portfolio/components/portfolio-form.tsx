@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Loader2 } from 'lucide-react';
+import { API_ENDPOINTS } from '@/lib/api-config';
 
 interface Portfolio {
   id: string;
@@ -82,7 +83,7 @@ export default function PortfolioForm() {
         }
       };
 
-      const response = await fetch('http://localhost:8000/api/portfolio/create', {
+      const response = await fetch(API_ENDPOINTS.portfolio.create, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

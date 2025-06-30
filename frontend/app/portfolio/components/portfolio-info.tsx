@@ -16,6 +16,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
+import { API_ENDPOINTS } from '@/lib/api-config';
 
 interface StockHolding {
   ticker: string;
@@ -74,7 +75,7 @@ export default function PortfolioInfo({ userId = 'demo_user_123' }: PortfolioInf
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:8000/api/portfolio/${userId}`);
+      const response = await fetch(API_ENDPOINTS.portfolio.getUserPortfolios(userId));
       const data = await response.json();
       
       if (data.success && data.portfolios.length > 0) {
