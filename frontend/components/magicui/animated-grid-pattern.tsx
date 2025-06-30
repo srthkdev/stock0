@@ -41,28 +41,25 @@ export function AnimatedGridPattern({
   const id = useId();
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [squares, setSquares] = useState<Array<{ id: number; pos: number[] }>>([]);
 
   const getPos = useCallback(() => {
+    if (dimensions.width === 0 || dimensions.height === 0) {
+      return [0, 0];
+    }
     return [
       Math.floor((Math.random() * dimensions.width) / width),
       Math.floor((Math.random() * dimensions.height) / height),
     ];
   }, [dimensions.width, dimensions.height, width, height]);
 
-  // Adjust the generateSquares function to return objects with an id, x, and y
+  // Generate squares function
   const generateSquares = useCallback((count: number) => {
     return Array.from({ length: count }, (_, i) => ({
       id: i,
       pos: getPos(),
     }));
   }, [getPos]);
-
-  const [squares, setSquares] = useState(() => 
-    Array.from({ length: numSquares }, (_, i) => ({
-      id: i,
-      pos: [0, 0],
-    }))
-  );
 
   // Function to update a single square's position
   const updateSquarePosition = (id: number) => {
@@ -78,7 +75,15 @@ export function AnimatedGridPattern({
     );
   };
 
-  // Update squares to animate in
+  // Initialize squares when component mounts
+  useEffect(() => {
+    setSquares(Array.from({ length: numSquares }, (_, i) => ({
+      id: i,
+      pos: [0, 0],
+    })));
+  }, [numSquares]);
+
+  // Update squares to animate in when dimensions are available
   useEffect(() => {
     if (dimensions.width && dimensions.height) {
       setSquares(generateSquares(numSquares));

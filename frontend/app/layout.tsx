@@ -7,7 +7,7 @@ import Navigation from "@/components/ui/navigation"
 import Footer from "@/components/ui/footer"
 import { UserProvider } from "@/lib/appwrite/user-provider"
 import { getCurrentUser } from "@/lib/appwrite/auth"
-import { AnimatedGridPattern } from "@/components/magicui/animated-grid-pattern"
+// import { AnimatedGridPattern } from "@/components/magicui/animated-grid-pattern"
 import { cn } from "@/lib/utils"
 
 // Force dynamic rendering since we use cookies
@@ -34,16 +34,7 @@ export default async function RootLayout({
         <body
           className={`${inter.className} min-h-screen bg-background pb-6 antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black relative`}
         >
-          <AnimatedGridPattern
-            numSquares={30}
-            maxOpacity={0.1}
-            duration={3}
-            repeatDelay={1}
-            className={cn(
-              "[mask-image:radial-gradient(500px_circle_at_center,white,transparent)]",
-              "z-0",
-            )}
-          />
+          {/* Temporarily disabled AnimatedGridPattern to fix initialization issue */}
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

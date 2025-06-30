@@ -53,7 +53,7 @@ export default function PortfolioForm() {
   const handleSectorToggle = (sector: string) => {
     if (sectors.includes(sector)) {
       setSectors(sectors.filter(s => s !== sector));
-    } else if (sectors.length < 5) {
+    } else if (sectors.length < 3) {
       setSectors([...sectors, sector]);
     }
   };
@@ -272,7 +272,7 @@ export default function PortfolioForm() {
 
           {/* Sector Selection */}
           <div className="space-y-3">
-            <Label>Preferred Sectors * (Select 1-5)</Label>
+            <Label>Preferred Sectors * (Select 1-3)</Label>
             <div className="grid grid-cols-2 gap-2">
               {availableSectors.map((sector) => (
                 <button
@@ -290,7 +290,7 @@ export default function PortfolioForm() {
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              Selected: {sectors.length}/5 sectors
+              Selected: {sectors.length}/3 sectors
             </p>
           </div>
 
